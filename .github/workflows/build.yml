@@ -27,12 +27,9 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Create JAR with dependencies
-        run: ./gradlew shadowJar
-
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/libs/star-pulse-1.0.0.jar
+          files: build/libs/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
