@@ -2,6 +2,7 @@ package aicode;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
@@ -13,6 +14,7 @@ public class Enemy extends Spriters {
     private final int scoreValue;
 
     private double damageCooldown;
+    private double facingAngle = Math.PI / 2.0;
 
     public Enemy(double x, double y) {
         this(x, y, 26, 26, 35, 80.0, 8, 0.8, 10, new Color(231, 76, 60));
@@ -46,6 +48,7 @@ public class Enemy extends Spriters {
         if (distance > 0.001) {
             dx /= distance;
             dy /= distance;
+            facingAngle = Math.atan2(dy, dx) + Math.PI / 2.0;
             x += dx * speed * deltaTime;
             y += dy * speed * deltaTime;
         }
@@ -60,14 +63,18 @@ public class Enemy extends Spriters {
 
     @Override
     public void draw(Graphics2D graphics) {
+        AffineTransform oldTransform = graphics.getTransform();
+        graphics.rotate(facingAngle, centerX(), centerY());
         if (SPRITE != null && !isBoss()) {
             graphics.drawImage(SPRITE, (int) x, (int) y, (int) width, (int) height, null);
+            graphics.setTransform(oldTransform);
             return;
         }
         graphics.setColor(currentColor());
         graphics.fill(new Rectangle2D.Double(x, y, width, height));
         graphics.setColor(new Color(80, 0, 0, 120));
         graphics.draw(new Rectangle2D.Double(x + 4, y + 4, width - 8, height - 8));
+        graphics.setTransform(oldTransform);
     }
 
     public int getScoreValue() {
@@ -76,5 +83,9 @@ public class Enemy extends Spriters {
 
     public boolean isBoss() {
         return false;
+    }
+
+    protected double getFacingAngle() {
+        return facingAngle;
     }
 }

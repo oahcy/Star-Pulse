@@ -2,6 +2,7 @@ package aicode;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
 public class EnemyBullet extends Spriters {
@@ -45,11 +46,16 @@ public class EnemyBullet extends Spriters {
 
     @Override
     public void draw(Graphics2D graphics) {
+        double angle = Math.atan2(vy, vx) + Math.PI / 2.0;
+        AffineTransform oldTransform = graphics.getTransform();
+        graphics.rotate(angle, centerX(), centerY());
         if (SPRITE != null) {
             graphics.drawImage(SPRITE, (int) x, (int) y, (int) width, (int) height, null);
+            graphics.setTransform(oldTransform);
             return;
         }
         graphics.setColor(currentColor());
         graphics.fillOval((int) x, (int) y, (int) width, (int) height);
+        graphics.setTransform(oldTransform);
     }
 }

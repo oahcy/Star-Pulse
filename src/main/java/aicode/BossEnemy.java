@@ -2,6 +2,7 @@ package aicode;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -26,8 +27,11 @@ public class BossEnemy extends Enemy {
 
     @Override
     public void draw(Graphics2D graphics) {
+        AffineTransform oldTransform = graphics.getTransform();
+        graphics.rotate(getFacingAngle(), centerX(), centerY());
         if (SPRITE != null) {
             graphics.drawImage(SPRITE, (int) x, (int) y, (int) width, (int) height, null);
+            graphics.setTransform(oldTransform);
             return;
         }
         graphics.setColor(currentColor());
@@ -35,6 +39,7 @@ public class BossEnemy extends Enemy {
         graphics.setColor(new Color(241, 196, 15));
         graphics.draw(new Rectangle2D.Double(x + 10, y + 10, width - 20, height - 20));
         graphics.draw(new Rectangle2D.Double(x + 16, y + 16, width - 32, height - 32));
+        graphics.setTransform(oldTransform);
     }
 
     @Override

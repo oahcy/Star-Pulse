@@ -2,6 +2,7 @@ package aicode;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 
@@ -52,13 +53,18 @@ public class Bullet extends Spriters {
 
     @Override
     public void draw(Graphics2D graphics) {
+        double angle = Math.atan2(vy, vx);
+        AffineTransform oldTransform = graphics.getTransform();
+        graphics.rotate(angle, centerX(), centerY());
         if (SPRITE != null) {
             graphics.drawImage(SPRITE, (int) x - 2, (int) y - 2, (int) width + 4, (int) height + 4, null);
+            graphics.setTransform(oldTransform);
             return;
         }
         graphics.setColor(currentColor());
         graphics.fill(new Ellipse2D.Double(x, y, width, height));
         graphics.setColor(new Color(255, 245, 157, 120));
         graphics.fill(new Ellipse2D.Double(x - 2, y - 2, width + 4, height + 4));
+        graphics.setTransform(oldTransform);
     }
 }

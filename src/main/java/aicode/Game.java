@@ -14,19 +14,22 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 
-public class Game extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
+public class Game extends JPanel implements KeyListener, MouseListener, MouseMotionListener, Runnable {
     private static final int WIDTH = 960;
     private static final int HEIGHT = 640;
-    private static final int FRAME_DELAY_MS = 16;
+    private static final long TARGET_FRAME_NS = 1_000_000_000L / 60; // 约 16.67ms
 
     private GameMap map = new GameMap(WIDTH, HEIGHT, true);
     private long lastUpdateTime = System.nanoTime();
+    private long lastFpsUpdateTime = System.nanoTime();
+    private int frameCount = 0;
+    private double fps = 0;
     private final RoundRectangle2D.Double primaryButton = new RoundRectangle2D.Double(WIDTH / 2.0 - 120, HEIGHT / 2.0 + 90, 240, 48, 18, 18);
     private final RoundRectangle2D.Double secondaryButton = new RoundRectangle2D.Double(WIDTH / 2.0 - 120, HEIGHT / 2.0 + 150, 240, 48, 18, 18);
     private boolean hoverPrimary;
     private boolean hoverSecondary;
+    private volatile boolean running = true;
 
     private enum GameState {
         START_SCREEN,
@@ -44,10 +47,29 @@ public class Game extends JPanel implements KeyListener, MouseListener, MouseMot
         addMouseListener(this);
         addMouseMotionListener(this);
 
-        Timer timer = new Timer(FRAME_DELAY_MS, event -> {
+        Thread gameThread = new Thread(this, "GameThread");
+        gameThread.setPriority(Thread.MAX_PRIORITY);
+        gameThread.start();
+    }
+
+    @Override
+    public void run() {
+        while (running) {
+            long frameStart = System.nanoTime();
+            
+            // 更新逻辑
             long now = System.nanoTime();
             double deltaTime = (now - lastUpdateTime) / 1_000_000_000.0;
             lastUpdateTime = now;
+
+            frameCount++;
+            long fpsDelta = now - lastFpsUpdateTime;
+            if (fpsDelta >= 1_000_000_000) {
+                fps = frameCount * 1_000_000_000.0 / fpsDelta;
+                frameCount = 0;
+                lastFpsUpdateTime = now;
+            }
+
             if (state == GameState.PLAYING) {
                 map.update(Math.min(deltaTime, 0.05));
                 if (map.isGameOver()) {
@@ -56,9 +78,23 @@ public class Game extends JPanel implements KeyListener, MouseListener, MouseMot
                     state = GameState.GAME_OVER;
                 }
             }
+
             repaint();
-        });
-        timer.start();
+            
+            // 动态计算休眠时间
+            long frameEnd = System.nanoTime();
+            long frameDuration = frameEnd - frameStart;
+            long sleepTime = TARGET_FRAME_NS - frameDuration;
+            
+            if (sleepTime > 0) {
+                try {
+                    Thread.sleep(sleepTime / 1_000_000, (int) (sleepTime % 1_000_000));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
     }
 
     public static void main(String[] args) {
@@ -80,6 +116,10 @@ public class Game extends JPanel implements KeyListener, MouseListener, MouseMot
         super.paintComponent(graphics);
         Graphics2D g2d = (Graphics2D) graphics;
         map.draw(g2d);
+        if (state == GameState.PLAYING) {
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(String.format("FPS: %.1f", fps), WIDTH - 70, 24);
+        }
         if (state == GameState.START_SCREEN) {
             drawStartScreen(g2d);
         } else if (state == GameState.PAUSED) {
