@@ -19,6 +19,12 @@ application {
     mainClass = 'aicode.Game'
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'aicode.Game'
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
