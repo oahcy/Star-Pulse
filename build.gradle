@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'aicode'
@@ -17,6 +18,14 @@ repositories {
 
 application {
     mainClass = 'aicode.Game'
+}
+
+shadowJar {
+    archiveBaseName = 'star-pulse'
+    archiveClassifier = ''
+    manifest {
+        attributes 'Main-Class': 'aicode.Game'
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
